@@ -1,0 +1,397 @@
+<div class="card--container2"> 
+            <div class="date">
+                <div class="select-menu">
+                        <label for="year">Select a Year:</label>
+                        <select id="year" name="year">
+                        <!-- JavaScript will dynamically generate options here -->
+                        </select>
+
+                </div>
+                <script>
+    // Get the current year
+    var currentYear = new Date().getFullYear();
+
+    // Get the dropdown element
+    var dropdown = document.getElementById("year");
+
+    // Add options for the current year and the 10 years preceding it
+    for (var i = 0; i <= 10; i++) {
+        var option = document.createElement("option");
+        option.text = currentYear - i;
+        option.value = currentYear - i;
+        dropdown.add(option);
+    }
+
+    dropdown.addEventListener("change", function() {
+        // Get the selected value
+        var year = dropdown.value;
+        console.log("Selected Year: " + year);
+        // You can perform any further action with the selected value here
+        // Update the hidden input field with the selected year value
+        document.getElementById("year").value = year;
+        
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    document.getElementById('currentasset').innerHTML = xhr.responseText;
+                } else {
+                    console.error('Request failed: ' + xhr.status);
+                }
+            }
+        };
+        xhr.open('GET', 'bs/current_asset.php?year=' + year, true);
+        xhr.send();
+    });
+</script>
+            </div>
+        
+            <div class="todaysreport">
+            <div class="title-card3"><h3>Balance Sheet</h3></div>
+            
+            <h3 style="text-align: center;">ASSETS</h3>
+            <br >
+            <h3>Current Assets</h3>
+    
+            <table class="responsive-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="currentasset">
+                <?php
+                $current_year = date("Y");
+                $currentasset = "Current Assets";
+                $pdoQuery = "SELECT * FROM balance_sheet WHERE accounts = :account AND year = :year";
+                $pdoResult = $pdoConnect->prepare($pdoQuery);
+                $pdoResult->bindParam(':account', $currentasset);
+                $pdoResult->bindParam(':year', $current_year);
+                $pdoExec = $pdoResult->execute();
+                while ($row = $pdoResult->fetch(PDO::FETCH_ASSOC)){
+                    extract($row);
+                    echo "<tr>";
+                    echo "<td>$sub_account</td>";
+                    echo "<td>₱ " . number_format((float)$amount, 2) . "</td>";
+                    echo "</tr>";
+                }
+                ?>
+                </tbody>
+                <tfoot>
+                    <tr>
+<?php 
+
+$sql = "SELECT amount FROM balance_sheet WHERE accounts = :account";
+
+try {
+    // Prepare and execute the query
+    $stmt = $pdoConnect->prepare($sql);
+    $stmt->execute(array(":account" => $currentasset));
+
+    // Initialize sum variable
+    $currentassetsum = 0;
+
+    // Fetch each row and add its number to the sum
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $currentassetsum += $row['amount'];
+    }
+
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
+}
+
+// Close the connection
+$pdo = null;
+                        
+                        ?>
+                        <th>Subtotal</th>
+                        <th><?php echo "₱ " . number_format((float)$currentassetsum, 2); ?></th>
+                    </tr>
+                </tfoot>
+            </table>
+        
+            <br >
+            <h3>Long-term Assets</h3>
+        
+            <table class="responsive-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php
+                $longtermasset = "Long-Term Assets";
+                $pdoQuery = "SELECT * FROM balance_sheet WHERE accounts = :account";
+                $pdoResult = $pdoConnect->prepare($pdoQuery);
+                $pdoExec = $pdoResult->execute(array(":account" => $longtermasset));
+                while ($row = $pdoResult->fetch(PDO::FETCH_ASSOC)){
+                    extract($row);
+                    echo "<tr>";
+                    echo "<td>$sub_account</td>";
+                    echo "<td>₱ " . number_format((float)$amount, 2) . "</td>";
+                    echo "</tr>";
+                }
+                ?>
+                </tbody>
+                <tfoot>
+<?php 
+
+$sql = "SELECT amount FROM balance_sheet WHERE accounts = :account";
+
+try {
+    // Prepare and execute the query
+    $stmt = $pdoConnect->prepare($sql);
+    $stmt->execute(array(":account" => $longtermasset));
+
+    // Initialize sum variable
+    $longtermassetsum = 0;
+
+    // Fetch each row and add its number to the sum
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $longtermassetsum += $row['amount'];
+    }
+
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
+}
+
+// Close the connection
+$pdo = null;
+                        
+?>
+                    <tr>
+                        <th>Subtotal</th>
+                        <th><?php echo "₱ " . number_format((float)$longtermassetsum, 2); ?></th>
+                    </tr>
+                </tfoot>
+            </table>
+            <br >
+            <table class="responsive-table">
+                <thead>
+                    <?php
+                    $totalassetsum = $currentassetsum + $longtermassetsum
+                    ?>
+                    <tr>
+                        <th>Total Assets</th>
+                        <th><?php echo "₱ " . number_format((float)$totalassetsum, 2); ?></th>
+                    </tr>
+                </thead>
+            </table>
+            <br >
+            <br >
+            
+            <h3 style="text-align: center;">Liabilities</h3>
+        
+            <br >
+            <br >
+            <h3>Current Liabilities</h3>
+        
+            <table class="responsive-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php
+                $currentliabilities = "Current Liabilities";
+                $pdoQuery = "SELECT * FROM balance_sheet WHERE accounts = :account";
+                $pdoResult = $pdoConnect->prepare($pdoQuery);
+                $pdoExec = $pdoResult->execute(array(":account" => $currentliabilities));
+                while ($row = $pdoResult->fetch(PDO::FETCH_ASSOC)){
+                    extract($row);
+                    echo "<tr>";
+                    echo "<td>$sub_account</td>";
+                    echo "<td>₱ " . number_format((float)$amount, 2) . "</td>";
+                    echo "</tr>";
+                }
+                ?>
+                </tbody>
+                <tfoot>
+<?php 
+
+$sql = "SELECT amount FROM balance_sheet WHERE accounts = :account";
+
+try {
+    // Prepare and execute the query
+    $stmt = $pdoConnect->prepare($sql);
+    $stmt->execute(array(":account" => $currentliabilities));
+
+    // Initialize sum variable
+    $currentliabiliteissum = 0;
+
+    // Fetch each row and add its number to the sum
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $currentliabiliteissum += $row['amount'];
+    }
+
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
+}
+
+// Close the connection
+$pdo = null;
+                        
+?>
+                    <tr>
+                        <th>Subtotal</th>
+                        <th><?php echo "₱ " . number_format((float)$currentliabiliteissum, 2); ?></th>
+                    </tr>
+                </tfoot>
+            </table>
+        
+            <br >
+            <h3>Long-term Liabilities</h3>
+        
+            <table class="responsive-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php
+                $longtermliabilities = "Long-Term Liabilities";
+                $pdoQuery = "SELECT * FROM balance_sheet WHERE accounts = :account";
+                $pdoResult = $pdoConnect->prepare($pdoQuery);
+                $pdoExec = $pdoResult->execute(array(":account" => $longtermliabilities));
+                while ($row = $pdoResult->fetch(PDO::FETCH_ASSOC)){
+                    extract($row);
+                    echo "<tr>";
+                    echo "<td>$sub_account</td>";
+                    echo "<td>₱ " . number_format((float)$amount, 2) . "</td>";
+                    echo "</tr>";
+                }
+                ?>
+                </tbody>
+                <tfoot>
+<?php 
+
+$sql = "SELECT amount FROM balance_sheet WHERE accounts = :account";
+
+try {
+    // Prepare and execute the query
+    $stmt = $pdoConnect->prepare($sql);
+    $stmt->execute(array(":account" => $longtermliabilities));
+
+    // Initialize sum variable
+    $longtermliabilitiessum = 0;
+
+    // Fetch each row and add its number to the sum
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $longtermliabilitiessum += $row['amount'];
+    }
+
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
+}
+
+// Close the connection
+$pdo = null;
+                        
+?>
+                    <tr>
+                        <th>Subtotal</th>
+                        <th><?php echo "₱ " . number_format((float)$longtermliabilitiessum, 2); ?></th>
+                    </tr>
+                </tfoot>
+            </table>
+            <br >
+            <table class="responsive-table">
+                <thead>
+                    <?php
+                    $totalliabilitiessum = $currentliabiliteissum + $longtermliabilitiessum
+                    ?>
+                    <tr>
+                        <th>Total Liabilities</th>
+                        <th><?php echo "₱ " . number_format((float)$totalliabilitiessum, 2); ?></th>
+                    </tr>
+                </thead>
+            </table>
+            <br >
+            <br >
+        
+            <h3 style="text-align: center;">Equity</h3>
+        
+            <br >
+            <br >
+            <h3>Stakeholder's Equity</h3>
+        
+            <table class="responsive-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php
+                $equity = "Equity";
+                $pdoQuery = "SELECT * FROM balance_sheet WHERE accounts = :account";
+                $pdoResult = $pdoConnect->prepare($pdoQuery);
+                $pdoExec = $pdoResult->execute(array(":account" => $equity));
+                while ($row = $pdoResult->fetch(PDO::FETCH_ASSOC)){
+                    extract($row);
+                    echo "<tr>";
+                    echo "<td>$sub_account</td>";
+                    echo "<td>₱ " . number_format((float)$amount, 2) . "</td>";
+                    echo "</tr>";
+                }
+                ?>
+                </tbody>
+                <tfoot>
+<?php 
+
+$sql = "SELECT amount FROM balance_sheet WHERE accounts = :account";
+
+try {
+    // Prepare and execute the query
+    $stmt = $pdoConnect->prepare($sql);
+    $stmt->execute(array(":account" => $equity));
+
+    // Initialize sum variable
+    $equitysum = 0;
+
+    // Fetch each row and add its number to the sum
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $equitysum += $row['amount'];
+    }
+
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
+}
+
+// Close the connection
+$pdo = null;
+                        
+?>
+                    <tr>
+                        <th>Total Equity</th>
+                        <th><?php echo "₱ " . number_format((float)$equitysum, 2);?></th>
+                    </tr>
+                </tfoot>
+            </table>
+            <br >
+            <table class="responsive-table">
+                <thead>
+                    <?php
+                    $totalliabilitiesandequitysum = $totalliabilitiessum + $equitysum
+                    ?>
+                    <tr>
+                        <th>Total Liabilities and Equity</th>
+                        <th><?php echo "₱ " . number_format((float)$totalliabilitiesandequitysum, 2); ?></th>
+                    </tr>
+                </thead>
+            </table>
+            <br >
+        
+        
+        
+            </div>
+        
+        </div>

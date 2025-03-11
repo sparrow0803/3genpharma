@@ -1,0 +1,361 @@
+<!-- The Modal -->
+<div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+    
+        <div class="modal-header">
+            <span class="close">&times;</span>
+            <h3>Make a Financial Request?</h3> 
+        </div>
+        <br>
+        <div class="modal-body">
+        <div class="flex-child" id="form">
+            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" onsubmit="return confirmSubmit();">
+            <div class="form-group">
+            <label for="dept">Department:</label>
+                <select name="dept" id="dept" required>
+                    <option value="Inventory">Inventory</option>
+                </select>
+            </div>
+            <div class="form-group">
+            <label for="desc">Description:</label>
+                <select name="desc" id="desc" required>
+                <option value="Food Allowance">Food Allowance</option>
+                </select>
+            </div>
+            <label for="desc">Amount:</label>
+            <input type="number" name="Amount" required placeholder="00.00" step="any"><br>
+            <input type="submit" name="insert" value="Request"  ><br>
+            </form>
+        </div>
+    
+    <?php
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        // Check if the form fields are set and not empty
+        if (isset($_POST['dept']) && isset($_POST['desc']) && isset($_POST['Amount'])) {
+            $pdoConnect = new PDO("mysql:host=localhost;dbname=finance_dept","root","");
+            $pdoConnect->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+            // Get the form data
+            date_default_timezone_set('Asia/Manila');
+            $date = date('Y-m-d');
+            $time = date('H:i:s');
+    
+            $dept = $_POST['dept'];
+            $desc = $_POST['desc'];
+            $amount = $_POST['Amount'];
+            $status = 'Pending';
+    
+            $insertQuery = "INSERT INTO financial_request 
+                            (`date`, `time`, `department`, `description`, `amount`, `status`) 
+                            VALUES (:date, :time, :department, :description, :amount, :status)";
+            $stmt = $pdoConnect->prepare($insertQuery);
+            $stmt->bindParam(':date', $date, PDO::PARAM_STR);
+            $stmt->bindParam(':time', $time, PDO::PARAM_STR);
+            $stmt->bindParam(':department', $dept);
+            $stmt->bindParam(':description', $desc);
+            $stmt->bindParam(':amount', $amount);
+            $stmt->bindParam(':status', $status);
+            $stmt->execute();
+        }
+    }
+    ?>
+    
+        <div class="flex-child" id="table">
+            <h3>History</h3>
+        <table class = "table">
+        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Department</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+        </thead>
+        <tbody>
+        <?php
+                    $pdoConnect = new PDO("mysql:host=localhost;dbname=finance_dept","root","");
+                    $pdoConnect->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+                    $pdoLedgerQuery = "SELECT * FROM financial_request WHERE department = 'Inventory'";
+                    $pdoResult = $pdoConnect->prepare($pdoLedgerQuery);
+                    $pdoExec = $pdoResult->execute();
+                    while ($row = $pdoResult->fetch(PDO::FETCH_ASSOC)){
+                        extract($row);
+                        echo "<tr>";
+                        echo "<td>$date</td>";
+                        echo "<td>$time</td>";
+                        echo "<td>$department</td>";
+                        echo "<td>$description</td>";
+                        echo "<td>₱ " . number_format((float)$amount, 2) . "</td>";
+                        echo "<td>$status</td>";
+                        echo "</tr>";
+                    }
+        ?>
+        </tbody>
+        </table>
+        </div>
+         
+        </div>
+            <br />
+        <div class="modal-footer">
+            <a href=""><h6>Need some help?</h6></a>
+        </div>
+    
+    
+        
+    </div>
+    
+    </div>
+    </div>
+
+
+
+    /* The Modal (background) */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+     
+    /* Modal Content/Box */
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+    }
+     
+    /* The Close Button */
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+     
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    
+    /* Modal Header */
+    .modal-header {
+        padding: 2px 16px;
+        background-color: #5cb85c;
+        color: white;
+      }
+     
+      /* Modal Body */
+      .modal-body {
+        padding: 0 auto;
+        display: flex;
+        border: auto solid #fff;
+      }
+    
+    
+      .flex-child{
+        float: right;
+        flex: 1;
+        border: 2px solid #043047;
+      }
+    
+    
+      .flex-child:first-child {
+        margin-right: 20px;
+      }
+    
+    
+      #form {
+        width: 200px;
+      }
+    
+    
+      #table {
+        max-height: 500px;
+        overflow-y: auto;
+      }
+    
+    
+      /*
+     
+      .container-table{
+        flex: 1;
+        border: 2px solid yellow;
+        overflow-x: auto;
+        width: 300px;
+      }
+    */
+     
+     
+      /* Modal Footer */
+      .modal-footer {
+        padding: 2px 16px;
+        background-color: #5cb85c;
+        color: white;
+      }
+     
+      /* Modal Content */
+      .modal-content {
+        position: relative;
+        background-color: #fefefe;
+        margin: auto;
+        padding: 0;
+        border: 1px solid #888;
+        width: 80%;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+        animation-name: animatetop;
+        animation-duration: 0.4s
+      }
+     
+      /* Add Animation */
+      @keyframes animatetop {
+        from {top: -300px; opacity: 0}
+        to {top: 0; opacity: 1}
+      }
+    
+    
+      /*-------Form in the modal---------*/
+      form {
+            background-color: #fff;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    
+    
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+    
+    
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    
+    
+        input[type="submit"] {
+            width: 100%;
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    
+    
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    
+    
+        .form-group {
+            margin-bottom: 20px;
+        }
+        h3{
+            text-align: center;
+            font-size: 30px;
+        }
+        h6 {
+            text-align: center;
+        }
+        /*
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }*/
+    
+    
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Ensure that padding and border are included in the width */
+        }
+    
+    
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    
+    
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    
+    
+        input[type="submit"]:focus {
+            outline: none; /* Remove outline when button is focused */
+        }
+        .form-group {
+            margin-bottom: 5px; /* Reduced margin */
+        }
+    
+    
+
+        /* --------------Table -----------------*/
+        .table {
+                table-layout: auto;
+                border-collapse: collapse;
+                width: 100%;
+            }
+        
+        
+        .table  th, td {
+                border: 2px solid #dddddd;
+                text-align: left;
+                padding: 9px;
+                font-size: 11px;
+            }
+        
+        
+        .table  th {
+                background-color: #f2f2f2;
+            }
+        
+        
+        .table  tbody {
+                overflow-y: scroll;
+            }
+    
+    
